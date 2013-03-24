@@ -1,15 +1,11 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverlappingInstances #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 {-|
@@ -125,7 +121,7 @@ where
 
 import           Data.Default (Default, def)
 import           GHC.TypeLits (Symbol)
-import           GHC.Exts (Any, Constraint)
+import           GHC.Exts (Any)
 import           Unsafe.Coerce (unsafeCoerce)
 
 
@@ -138,12 +134,12 @@ import           Unsafe.Coerce (unsafeCoerce)
 -- module). The @DataKinds@ extension is required to refer to 'Symbol'-kinded
 -- types.
 class Implicit (s :: Symbol) a where
-    _param :: proxy s -> proxy' a -> a
+    _param :: proxy s -> a
 
 
 ------------------------------------------------------------------------------
 instance Default a => Implicit s a where
-    _param _ _ = def
+    _param _ = def
 
 
 ------------------------------------------------------------------------------
@@ -151,7 +147,7 @@ instance Default a => Implicit s a where
 -- context @'Implicit' s a@. The name @s@ is specified by a proxy argument
 -- passed to @param@.
 param :: Implicit s a => proxy s -> a
-param p = _param p Proxy
+param = _param
 
 
 ------------------------------------------------------------------------------
@@ -195,74 +191,37 @@ infixr 1 $~
 f $~ a = using (Proxy :: Proxy Any) a f
 
 
--- edwardk is the new oleg ---------------------------------------------------
-
 ------------------------------------------------------------------------------
-newtype Lift s a t = Lift a
+data Proxy (s :: Symbol) = Proxy
 
 
 ------------------------------------------------------------------------------
-instance Reifies t a => Implicit s (Lift s a t) where
-    _param _ a = Lift $ reflect (peek a)
-      where
-        peek :: proxy b -> b
-        peek _ = undefined
+newtype Lift a = Lift a
+
+
+------------------------------------------------------------------------------
+newtype Tagged (s :: Symbol) a = Tagged a
+
+
+------------------------------------------------------------------------------
+data Dict c where
+    Dict :: c => Dict c
 
 
 ------------------------------------------------------------------------------
 using :: proxy s -> a -> (Implicit s a => b) -> b
-using (_ :: proxy s) d m = reify d $ \(_ :: Proxy t) -> m \\
-    trans
-        (unsafeCoerceConstraint :: (Implicit s (Lift s a t) :- Implicit s a))
-        reifiedInstance
+using p a = with (unlift (dict p a))
   where
-    reifiedInstance :: Reifies t a :- Implicit s (Lift s a t)
-    reifiedInstance = Sub Dict
+    with :: Dict c -> (c => b) -> b
+    with Dict b = b
+
+    unlift :: Dict (c (Lift p)) -> Dict (c p)
+    unlift = unsafeCoerce
+
+    dict :: proxy s -> a -> Dict (Implicit s (Lift a))
+    dict _ a' = let ?param = Tagged a' in Dict
 
 
 ------------------------------------------------------------------------------
-data Dict :: Constraint -> * where
-    Dict :: a => Dict a
-
-
-------------------------------------------------------------------------------
-newtype a :- b = Sub (a => Dict b)
-infixr 9 :-
-
-
-------------------------------------------------------------------------------
-(\\) :: a => (b => r) -> (a :- b) -> r
-r \\ Sub Dict = r
-infixl 1 \\ -- required comment
-
-
-------------------------------------------------------------------------------
-trans :: (b :- c) -> (a :- b) -> a :- c
-trans f g = Sub $ Dict \\ f \\ g
-
-
-------------------------------------------------------------------------------
-unsafeCoerceConstraint :: a :- b
-unsafeCoerceConstraint = unsafeCoerce (Sub Dict :: a :- a)
-
-
-------------------------------------------------------------------------------
-data Proxy a = Proxy
-
-
-------------------------------------------------------------------------------
-type Proxy' (a :: *) = Proxy a
-
-
-------------------------------------------------------------------------------
-class Reifies t a | t -> a where
-    reflect :: proxy t -> a
-
-
-------------------------------------------------------------------------------
-newtype Magic a r = Magic (forall t. Reifies t a => Proxy' t -> r)
-
-
-------------------------------------------------------------------------------
-reify :: forall a r. a -> (forall t. Reifies t a => Proxy' t -> r) -> r
-reify a k = unsafeCoerce (Magic k :: Magic a r) (const a) Proxy
+instance (?param :: Tagged s a) => Implicit s (Lift a) where
+    _param _ = let Tagged a = ?param in Lift a
