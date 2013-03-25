@@ -126,4 +126,4 @@ Profit: Introducing Cartesian Closed Constraints][profit].
 [constraints]: http://hackage.haskell.org/package/constraints
 [reflection]: http://hackage.haskell.org/package/reflection
 [firstclass]: http://joyoftypes.blogspot.com/2012/02/haskell-supports-first-class-instances.html
-[profit]: http://joyoftypes.blogspot.ie/2013/01/using-compiler-bugs-for-fun-and-profit.html
+[profit]: http://joyoftypes.blogspot.com/2013/01/using-compiler-bugs-for-fun-and-profit.html
