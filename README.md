@@ -26,7 +26,10 @@ develop `implicit-params` that isn't supported by the existing
 `ImplicitParams` extension. Imagine you have the following code:
 
     app :: Config -> IO ()
+    app config = doStuffWith config
+    
     defaultConfig :: Config
+    defaultConfig = ...
 
 Which is used by a program as follows:
 
@@ -39,14 +42,17 @@ the code in some ways and it seems like overkill. If it used the
 `ImplicitParams` extension, the above code would look like this:
 
     app :: (?config :: Config) => IO ()
+    app = doStuffWith ?config
+    
     defaultConfig :: Config
+    defaultConfig = ...
 
     main = let ?config = defaultConfig in app
 
-You can see why `ImplicitParams` isn't very highly regarded: all it did was
-make the code longer, in *two* different places, but at least the internals
-of `app` will be a bit nicer now that the `Config` value won't have to be
-plumbed around everywhere manually.
+You can see why `ImplicitParams` isn't very highly regarded: it made the type
+signature of `app` longer, as well as the code that uses it. However, at least
+the internals of `app` will be somewhat nicer now as the `Config` value won't
+have to be manually plumbed around everywhere.
 
 ## `data-default`
 
@@ -57,7 +63,9 @@ type is given by type inference). Using `Default` the above code could be made
 a little nicer:
 
     app :: (?config :: Config) => IO ()
-    instance Default Config where def = defaultConfig
+    app = doStuffWith ?config
+    
+    instance Default Config where def = ...
 
     main = let ?config = def in app
 
@@ -73,6 +81,8 @@ parameter (but it will work fine if you do set it). This is how the above code
 looks using `implicit-params`:
 
     app :: Implicit_ Config => IO ()
+    app = doStuffWith param_
+    
     instance Default Config where def = defaultConfig
 
     main = app
@@ -82,12 +92,12 @@ too:
 
     main = setParam_ (def {option = 1}) app
 
-(Bonus points for not abusing `let`/`where` bindings.)
-
 `setParam_` even has an infix synonym `$~` which makes the above code even
 nicer:
 
     main = app $~ def {option = 1}
+
+(Bonus points for not abusing `let`/`where` bindings.)
 
 ### Named implicit parameters
 
@@ -98,12 +108,13 @@ the particular implicit parameter on which to operate. `implicit-params` uses
 type level [symbols][Symbols] for this, which require the `DataKinds`
 [extension][DataKinds].
 
-`Implicit_` denotes an unnamed implicit parameter; `Implicit "foo"` can be
-used to denote a named implicit parameter named `"foo"` Named implicit
-parameters are slightly more awkward to use because they require passing
-[`Proxy`][Proxy] parameters to the `param` and `setParam` functions to specify
-the names of the implicit parameters on which they are to operate. See the
-Haddock documentation of the `Data.Implicit` module for more details.
+`Implicit_`, which is used in the examples above, denotes an unnamed implicit
+parameter. `Implicit "foo"` can be used to denote a named implicit parameter
+named `"foo"`. Named implicit parameters are slightly more awkward to use
+because they require passing [`Proxy`][Proxy] parameters to the `param` and
+`setParam` functions to specify the names of the implicit parameters on which
+they are to operate. See the Haddock documentation of the `Data.Implicit`
+module for more details.
 
 ## Acknowledgements
 
