@@ -105,9 +105,25 @@ parameters are slightly more awkward to use because they require passing
 the names of the implicit parameters on which they are to operate. See the
 Haddock documentation of the `Data.Implicit` module for more details.
 
+## Acknowledgements
+
+This wouldn't be possible without techniques that I learnt from
+[Edward Kmett][edwardk] and [Philip JF][philipjf]. In particular, this package
+uses ideas from Edward's packages [tagged][tagged], [constraints][constraints]
+and [reflection][reflection] and Philip's blog posts [Haskell Supports
+First-Class Instances][firstclass] and [Using Compiler Bugs for Fun and
+Profit: Introducing Cartesian Closed Constraints][profit].
+
 [ImplicitParams]: http://www.haskell.org/ghc/docs/latest/html/users_guide/other-type-extensions.html#implicit-parameters
 [Reader]: http://hackage.haskell.org/packages/archive/mtl/latest/doc/html/Control-Monad-Reader-Class.html
 [data-default]: http://hackage.haskell.org/package/data-default
 [Symbols]: http://www.haskell.org/ghc/docs/latest/html/libraries/base/GHC-TypeLits.html#t:Symbol
 [DataKinds]: http://www.haskell.org/ghc/docs/7.4.1/html/users_guide/kind-polymorphism-and-promotion.html
 [Proxy]: http://hackage.haskell.org/packages/archive/tagged/latest/doc/html/Data-Proxy.html
+[edwardk]: http://comonad.com/reader/
+[philipjf]: http://joyoftypes.blogspot.com/
+[tagged]: http://hackage.haskell.org/package/tagged
+[constraints]: http://hackage.haskell.org/package/constraints
+[reflection]: http://hackage.haskell.org/package/reflection
+[firstclass]: http://joyoftypes.blogspot.com/2012/02/haskell-supports-first-class-instances.html
+[profit]: http://joyoftypes.blogspot.ie/2013/01/using-compiler-bugs-for-fun-and-profit.html
