@@ -82,7 +82,7 @@ looks using `implicit-params`:
 
     app :: Implicit_ Config => IO ()
     app = doStuffWith param_
-    
+
     instance Default Config where def = defaultConfig
 
     main = app
