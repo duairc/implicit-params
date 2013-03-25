@@ -196,10 +196,6 @@ data Proxy (s :: Symbol) = Proxy
 
 
 ------------------------------------------------------------------------------
-newtype Lift a = Lift a
-
-
-------------------------------------------------------------------------------
 newtype Tagged (s :: Symbol) a = Tagged a
 
 
@@ -215,13 +211,13 @@ using p a = with (unlift (dict p a))
     with :: Dict c -> (c => b) -> b
     with Dict b = b
 
-    unlift :: Dict (c (Lift p)) -> Dict (c p)
+    unlift :: Dict (c (lift p)) -> Dict (c p)
     unlift = unsafeCoerce
 
-    dict :: proxy s -> a -> Dict (Implicit s (Lift a))
+    dict :: proxy s -> a -> Dict (Implicit s (Tagged s a))
     dict _ a' = let ?param = Tagged a' in Dict
 
 
 ------------------------------------------------------------------------------
-instance (?param :: Tagged s a) => Implicit s (Lift a) where
-    _param _ = let Tagged a = ?param in Lift a
+instance (?param :: Tagged s a) => Implicit s (Tagged s a) where
+    _param _ = ?param
