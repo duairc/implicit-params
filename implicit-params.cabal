@@ -7,19 +7,20 @@ author:         Shane O'Brien
 maintainer:     shane@duairc.com
 stability:      Experimental
 category:       Data
-cabal-version:  >= 1.2
+cabal-version:  >= 1.6
 build-type:     Simple
-homepage:       http://github.com/duairc/implicit-params
-bug-reports:    http://github.com/duairc/implicit-params/issues
+homepage:       http://github.com/duairc/implicit
+bug-reports:    http://github.com/duairc/implicit/issues
 description:
   Named and unnamed implicit parameters with defaults using type classes and
   constraint hacks. For examples, see "Data.Implicit".
 
 extra-source-files:
   CONTRIBUTORS,
-  LICENSE
+  LICENSE,
+  README.md
 
-Library
+library
   hs-source-dirs:
     src
 
@@ -30,4 +31,8 @@ Library
     base >= 4.6 && < 5,
     data-default > 0.2 && < 1
 
-  ghc-options: -Wall -O2
+  ghc-options: -Wall
+
+source-repository head
+  type:     git
+  location: http://github.com/duairc/implicit
