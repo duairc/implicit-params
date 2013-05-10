@@ -119,7 +119,7 @@ module Data.Implicit
     )
 where
 
-import           Data.Default (Default, def)
+import           Data.Default.Class (Default, def)
 import           GHC.TypeLits (Symbol)
 import           GHC.Exts (Any)
 import           Unsafe.Coerce (unsafeCoerce)
