@@ -1,5 +1,8 @@
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ImplicitParams #-}
@@ -120,7 +123,11 @@ module Data.Implicit
 where
 
 import           Data.Default.Class (Default, def)
+#if __GLASGOW_HASKELL__ > 704
 import           GHC.TypeLits (Symbol)
+#else
+#define Symbol (())
+#endif
 import           GHC.Exts (Any)
 import           Unsafe.Coerce (unsafeCoerce)
 
