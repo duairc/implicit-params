@@ -110,10 +110,13 @@ bar was: "goodbye
 -}
 
 module Data.Implicit
-    ( Implicit
+    (
+#if __GLASGOW_HASKELL__ > 704
+      Implicit
     , param
     , setParam
     , ($$~)
+#endif
 
     , Implicit_
     , param_
