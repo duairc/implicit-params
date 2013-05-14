@@ -1,6 +1,8 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE CPP #-}
+#if __GLASGOW_HASKELL__ > 704
 {-# LANGUAGE DataKinds #-}
+#endif
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
@@ -110,14 +112,10 @@ bar was: "goodbye
 -}
 
 module Data.Implicit
-    (
-#if __GLASGOW_HASKELL__ > 704
-      Implicit
+    ( Implicit
     , param
     , setParam
     , ($$~)
-#endif
-
     , Implicit_
     , param_
     , setParam_
@@ -129,7 +127,7 @@ import           Data.Default.Class (Default, def)
 #if __GLASGOW_HASKELL__ > 704
 import           GHC.TypeLits (Symbol)
 #else
-#define Symbol (())
+#define Symbol *
 #endif
 import           GHC.Exts (Any)
 import           Unsafe.Coerce (unsafeCoerce)
