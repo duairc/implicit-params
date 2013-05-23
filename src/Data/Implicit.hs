@@ -2,22 +2,12 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE UndecidableInstances #-}
-#ifdef LANGUAGE_ConstraintKinds
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE OverlappingInstances #-}
+#if __GLASGOW_HASKELL__ >= 706
 {-# LANGUAGE PolyKinds #-}
-#if __GLASGOW_HASKELL__ >= 707
+#endif
+{-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
-#else
-{-# LANGUAGE ImplicitParams #-}
-#endif
-#endif
+{-# LANGUAGE UndecidableInstances #-}
 
 {-|
 
@@ -108,13 +98,6 @@ bar was: ""
 foo was: "hello, world"
 bar was: "goodbye"
 
-An infix version of @setParam@ is also provided, '$$~'. Using @$$~@, the above
-example would be:
-
->>> putFooBar $$~ (Proxy :: Proxy "foo", "hello, world") $$~ (Proxy :: Proxy "bar", "goodbye")
-foo was: "hello, world"
-bar was: "goodbye
-
 -}
 
 module Data.Implicit
@@ -131,9 +114,7 @@ module Data.Implicit
 where
 
 import           Data.Default.Class (Default, def)
-#ifdef LANGUAGE_ConstraintKinds
 import           Unsafe.Coerce (unsafeCoerce)
-#endif
 
 
 ------------------------------------------------------------------------------
@@ -144,258 +125,68 @@ import           Unsafe.Coerce (unsafeCoerce)
 -- The name @\"foo\"@ is a type of kind 'Symbol' (from the "GHC.TypeLits"
 -- module). The @DataKinds@ extension is required to refer to 'Symbol'-kinded
 -- types.
-#ifdef LANGUAGE_ConstraintKinds
 class Implicit s a where
-#else
-class Default a => Implicit s a where
-#endif
-#if __GLASGOW_HASKELL__ >= 707
-    _param :: proxy s -> proxy' a -> a
-#else
-    _param :: proxy s -> a
-#endif
+    -- | 'param' retrieves the implicit parameter named @s@ of type @a@ from
+    -- the context @'Implicit' s a@. The name @s@ is specified by a proxy
+    -- argument passed to @param@.
+    param :: proxy s -> a
 
 
 ------------------------------------------------------------------------------
 instance Default a => Implicit s a where
-#if __GLASGOW_HASKELL__ >= 707
-    _param _ _ = def
-#else
-    _param _ = def
-#endif
+    param _ = def
 
 
 ------------------------------------------------------------------------------
--- | 'param' retrieves the implicit parameter named @s@ of type @a@ from the
--- context @'Implicit' s a@. The name @s@ is specified by a proxy argument
--- passed to @param@.
-param :: Implicit s a => proxy s -> a
-#if __GLASGOW_HASKELL__ >= 707
-param p = _param p Proxy
-#else
-param = _param
-#endif
+newtype Param s a b = Param (Implicit s a => b)
 
 
 ------------------------------------------------------------------------------
 -- | 'setParam' supplies a value for an implicit parameter named @s@ to a
 -- function which takes a homotypic and homonymous implicit parameter. The
 -- name @s@ is specified by a proxy argument passed to @setParam@.
-#ifdef LANGUAGE_ConstraintKinds
-setParam :: proxy s -> a -> (Implicit s a => b) -> b
-#else
-setParam :: Default a => proxy s -> a -> (Implicit s a => b) -> b
-#endif
-setParam = using
+setParam :: forall a b proxy s. proxy s -> a -> (Implicit s a => b) -> b
+setParam (_ :: proxy s) a f = unsafeCoerce (Param f :: Param s a b) (const a)
+{-# INLINE setParam #-}
 
 
 ------------------------------------------------------------------------------
 -- | An infix version of 'setParam' with flipped arguments.
-#ifdef LANGUAGE_ConstraintKinds
 (~$) :: (Implicit s a => b) -> proxy s -> a -> b
-#else
-(~$) :: Default a => (Implicit s a => b) -> proxy s -> a -> b
-#endif
-(~$) f proxy a = using proxy a f
+infixr 1 ~$
+(~$) f proxy a = setParam proxy a f
+{-# INLINE (~$) #-}
 
 
 ------------------------------------------------------------------------------
 -- | The constraint @'Implicit_' String@ on a function @f@ indicates that an
 -- unnamed implicit parameter of type @String@ is passed to @f@.
-#ifdef LANGUAGE_ConstraintKinds
 class Implicit_ a where
-#else
-class Default a => Implicit_ a where
-#endif
-#if __GLASGOW_HASKELL__ >= 707
-    _param_ :: proxy' a -> a
-#else
-    _param_ :: a
-#endif
+    param_ :: a
 
 
 ------------------------------------------------------------------------------
 instance Default a => Implicit_ a where
-#if __GLASGOW_HASKELL__ >= 707
-    _param_ _ = def
-#else
-    _param_ = def
-#endif
+    -- | 'param_' retrieves the unnamed implicit parameter of type @a@ from
+    -- the context @'Implicit_' a@.
+    param_ = def
 
 
 ------------------------------------------------------------------------------
--- | 'param_' retrieves the unnamed implicit parameter of type @a@ from the
--- context @'Implicit_' a@.
-param_ :: Implicit_ a => a
-#if __GLASGOW_HASKELL__ >= 707
-param_ = _param_ Proxy
-#else
-param_ = _param_
-#endif
+newtype Param_ a b = Param_ (Implicit_ a => b)
 
 
 ------------------------------------------------------------------------------
 -- | 'setParam_' supplies a value for an unnamed implicit parameter to a
 -- function which takes a homotypic implicit parameter.
-#ifdef LANGUAGE_ConstraintKinds
-setParam_ :: a -> (Implicit_ a => b) -> b
-#else
-setParam_ :: Default a => a -> (Implicit_ a => b) -> b
-#endif
-setParam_ = using_
+setParam_ :: forall a b. a -> (Implicit_ a => b) -> b
+setParam_ a f = unsafeCoerce (Param_ f :: Param_ a b) a
+{-# INLINE setParam_ #-}
 
 
 ------------------------------------------------------------------------------
 -- | An infix version of 'setParam_' with flipped arguments.
-#ifdef LANGUAGE_ConstraintKinds
 ($~) :: (Implicit_ a => b) -> a -> b
-#else
-($~) :: Default a => (Implicit_ a => b) -> a -> b
-#endif
 infixr 1 $~
-f $~ a = using_ a f
-
-
-#ifdef LANGUAGE_ConstraintKinds
-------------------------------------------------------------------------------
-data Dict c where
-    Dict :: c => Dict c
-
-
-#if __GLASGOW_HASKELL__ >= 707
-------------------------------------------------------------------------------
-data Proxy (a :: *) = Proxy
-
-
-------------------------------------------------------------------------------
-newtype Lift s a t = Lift a
-
-
-------------------------------------------------------------------------------
-newtype Lift_ a t = Lift_ a
-
-
-------------------------------------------------------------------------------
-using :: proxy s -> a -> (Implicit s a => b) -> b
-using (_ :: proxy s) d m = reify d $ \(_ :: Proxy t) -> m \\ trans
-    (unsafeCoerceConstraint :: (Implicit s (Lift s a t) :- Implicit s a))
-    reifiedInstance
-  where
-    reifiedInstance :: Reifies t a :- Implicit s (Lift s a t)
-    reifiedInstance = Sub Dict
-
-
-------------------------------------------------------------------------------
-using_ :: a -> (Implicit_ a => b) -> b
-using_ d m = reify d $ \(_ :: Proxy t) -> m \\ trans
-    (unsafeCoerceConstraint :: (Implicit_ (Lift_ a t) :- Implicit_ a))
-    reifiedInstance
-  where
-    reifiedInstance :: Reifies t a :- Implicit_ (Lift_ a t)
-    reifiedInstance = Sub Dict
-
-
-------------------------------------------------------------------------------
-newtype a :- b = Sub (a => Dict b)
-infixr 9 :-
-
-
-------------------------------------------------------------------------------
-(\\) :: a => (b => r) -> (a :- b) -> r
-r \\ Sub Dict = r
-infixl 1 \\ --
-
-
-------------------------------------------------------------------------------
-trans :: (b :- c) -> (a :- b) -> a :- c
-trans f g = Sub $ Dict \\ f \\ g
-
-
-------------------------------------------------------------------------------
-unsafeCoerceConstraint :: a :- b
-unsafeCoerceConstraint = unsafeCoerce (Sub Dict :: a :- a)
-
-
-------------------------------------------------------------------------------
-class Reifies t a | t -> a where
-    reflect :: proxy t -> a
-
-
-------------------------------------------------------------------------------
-newtype Magic a r = Magic (forall t. Reifies t a => Proxy t -> r)
-
-
-------------------------------------------------------------------------------
-reify :: forall a r. a -> (forall t. Reifies t a => Proxy t -> r) -> r
-reify a k = unsafeCoerce (Magic k :: Magic a r) (const a) Proxy
-
-
-------------------------------------------------------------------------------
-instance Reifies t a => Implicit s (Lift s a t) where
-    _param _ a = Lift $ reflect (peek a)
-      where
-        peek :: proxy b -> b
-        peek _ = undefined
-
-
-------------------------------------------------------------------------------
-instance Reifies t a => Implicit_ (Lift_ a t) where
-    _param_ a = Lift_ $ reflect (peek a)
-      where
-        peek :: proxy b -> b
-        peek _ = undefined
-#else
-------------------------------------------------------------------------------
-newtype Tagged s a = Tagged a
-
-
-------------------------------------------------------------------------------
-newtype Identity a = Identity a
-
-
-------------------------------------------------------------------------------
-using :: proxy s -> a -> (Implicit s a => b) -> b
-using p a = with (unlift (dict p a))
-  where
-    with :: Dict c -> (c => b) -> b
-    with Dict b = b
-
-    unlift :: Dict (c (lift p)) -> Dict (c p)
-    unlift = unsafeCoerce
-
-    dict :: proxy s -> a -> Dict (Implicit s (Tagged s a))
-    dict _ a' = let ?param = Tagged a' in Dict
-
-
-------------------------------------------------------------------------------
-using_ :: a -> (Implicit_ a => b) -> b
-using_ a = with (unlift (dict a))
-  where
-    with :: Dict c -> (c => b) -> b
-    with Dict b = b
-
-    unlift :: Dict (c (lift p)) -> Dict (c p)
-    unlift = unsafeCoerce
-
-    dict :: a -> Dict (Implicit_ (Identity a))
-    dict a' = let ?param = Identity a' in Dict
-
-
-------------------------------------------------------------------------------
-instance (?param :: Tagged s a) => Implicit s (Tagged s a) where
-    _param _ = ?param
-
-
-------------------------------------------------------------------------------
-instance (?param :: Identity a) => Implicit_ (Identity a) where
-    _param_ = ?param
-#endif
-#else
-using :: Implicit s a => proxy s -> a -> (Implicit s a => b) -> b
-using _ _ b = b
-
-
-------------------------------------------------------------------------------
-using_ :: Implicit_ a => a -> (Implicit_ a => b) -> b
-using_ _ b = b
-#endif
+f $~ a = setParam_ a f
+{-# INLINE ($~) #-}
