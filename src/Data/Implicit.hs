@@ -98,6 +98,13 @@ bar was: ""
 foo was: "hello, world"
 bar was: "goodbye"
 
+An infix version of @setParam@ is also provided, '~$'. Using @~$@, the above
+example would be:
+
+>>> putFooBar $$~ (Proxy :: Proxy "foo", "hello, world") $$~ (Proxy :: Proxy "bar", "goodbye")
+foo was: "hello, world"
+bar was: "goodbye
+
 -}
 
 module Data.Implicit
@@ -105,6 +112,7 @@ module Data.Implicit
     , param
     , setParam
     , (~$)
+    , ($$)
 
     , Implicit_
     , param_
@@ -146,16 +154,24 @@ newtype Param s a b = Param (Implicit s a => b)
 -- function which takes a homotypic and homonymous implicit parameter. The
 -- name @s@ is specified by a proxy argument passed to @setParam@.
 setParam :: forall a b proxy s. proxy s -> a -> (Implicit s a => b) -> b
-setParam (_ :: proxy s) a f = unsafeCoerce (Param f :: Param s a b) (const a)
+setParam _ a f = unsafeCoerce (Param f :: Param s a b) (const a)
 {-# INLINE setParam #-}
 
 
 ------------------------------------------------------------------------------
 -- | An infix version of 'setParam' with flipped arguments.
-(~$) :: (Implicit s a => b) -> proxy s -> a -> b
-infixr 1 ~$
-(~$) f proxy a = setParam proxy a f
+(~$) :: forall a b proxy s. (Implicit s a => b) -> proxy s -> a -> b
+infixl 1 ~$
+(~$) f _ a = unsafeCoerce (Param f :: Param s a b) (const a)
 {-# INLINE (~$) #-}
+
+
+------------------------------------------------------------------------------
+-- | A left-associated version of '$'.
+($$) :: (a -> b) -> a -> b
+infixl 0 $$
+($$) = id
+{-# INLINE ($$) #-}
 
 
 ------------------------------------------------------------------------------
@@ -186,7 +202,7 @@ setParam_ a f = unsafeCoerce (Param_ f :: Param_ a b) a
 
 ------------------------------------------------------------------------------
 -- | An infix version of 'setParam_' with flipped arguments.
-($~) :: (Implicit_ a => b) -> a -> b
-infixr 1 $~
-f $~ a = setParam_ a f
+($~) :: forall a b. (Implicit_ a => b) -> a -> b
+infixl 1 $~
+f $~ a = unsafeCoerce (Param_ f :: Param_ a b) a
 {-# INLINE ($~) #-}
