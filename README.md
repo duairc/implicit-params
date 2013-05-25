@@ -57,7 +57,7 @@ have to be manually plumbed around everywhere.
 ## `data-default`
 
 The [`data-default`][data-default] package provides a type class `Default`
-which represents the class of types which have a \"default\" value. It has a
+which represents the class of types which have a "default" value. It has a
 single operation `def` which returns the default value for a given type (the
 type is given by type inference). Using `Default` the above code could be made
 a little nicer:

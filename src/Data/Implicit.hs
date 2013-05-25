@@ -56,32 +56,30 @@ Here is an example of named implicit parameters:
 import "Data.Implicit"
 import "Data.Proxy"
 
+foo :: Proxy \"foo\"
+foo = Proxy
+
+bar :: Proxy \"bar\"
+bar = Proxy
+
 putFooBar :: ('Implicit' \"foo\" String, 'Implicit' \"bar\" String) => IO ()
 putFooBar = do
-    putStrLn $ \"foo was: \" ++ show foo
-    putStrLn $ \"bar was: \" ++ show bar
-
-foo :: 'Implicit' \"foo\" String => String
-foo = 'param' (Proxy :: Proxy \"foo\")
-
-bar :: 'Implicit' \"bar\" String => String
-bar = 'param' (Proxy :: Proxy \"bar\")
-
-setFoo :: String -> ('Implicit' \"foo\" String => a) -> a
-setFoo = 'setParam' (Proxy :: Proxy \"foo\")
-
-setBar :: String -> ('Implicit' \"bar\" String => a) -> a
-setBar = 'setParam' (Proxy :: Proxy \"bar\")
+    putStrLn $ \"foo was: \" ++ show (param foo :: String)
+    putStrLn $ \"bar was: \" ++ show (param bar :: String)
 @
 
 The 'Implicit' constraint is the named equivalent of 'Implicit_'. It takes an
-additional argument of kind 'Symbol' (which requires the @DataKinds@
-extension; see the "GHC.TypeLits" module) to specify the name of the implicit
-parameter. 'param' and 'setParam' work like their unnamed counterparts
-'param_' and 'setParam_', but they also take a proxy argument to specify the
-name of the implicit parameter. The code above defines the wrappers @foo@ and
-@bar@ and @setFoo@ and @setBar@ around @param@ and @setParam@ respectively,
-which hide all the (slightly ugly) proxy stuff.
+additional argument @s@ to specify the name of the implicit parameter.
+Implicit parameters can be \"named\" using any type (of any kind, on compilers
+that support the @PolyKinds@ extension). (The above code uses type-level
+strings of the @Symbol@ kind from the "GHC.TypeLits" module, which is the
+recommended way to name implicit parameters. However, @Symbol@ requires the
+@DataKinds@ extension and at least version 7.8 of GHC (7.6 is broken; see GHC
+bug \#7502), so you are free to use other types of other kinds if you want to
+support older versions of GHC.) 'param' and 'setParam' work like their unnamed
+counterparts 'param_' and 'setParam_', but they also take a proxy argument to
+specify the name of the implicit parameter. The code above defines @foo@ and
+@bar@ to hide away the (slightly ugly) proxy stuff.
 
 >>> putFooBar
 foo was: ""
@@ -90,18 +88,18 @@ bar was: ""
 Once again, the defaults of unspecified implicit parameters are given by the
 'Default' class.
 
->>> setFoo "hello, world" putFooBar
+>>> setParam foo "hello, world" putFooBar
 foo was: "hello, world"
 bar was: ""
 
->>> setBar "goodbye" $ setFoo "hello, world" putFooBar
+>>> setParam bar "goodbye" $ setParam foo "hello, world" putFooBar
 foo was: "hello, world"
 bar was: "goodbye"
 
 An infix version of @setParam@ is also provided, '~$'. Using @~$@, the above
 example would be:
 
->>> putFooBar ~$ (Proxy :: Proxy "foo") ~$ (Proxy :: Proxy "bar") $$ "goodbye" $$ "hello, world"
+>>> putFooBar ~$ foo ~$ bar $$ "goodbye" $$ "hello, world"
 foo was: "hello, world"
 bar was: "goodbye
 
@@ -129,10 +127,6 @@ import           Unsafe.Coerce (unsafeCoerce)
 -- | The constraint @'Implicit' \"foo\" String@ on a function @f@ indicates
 -- that an implicit parameter named @\"foo\"@ of type @String@ is passed to
 -- @f@.
---
--- The name @\"foo\"@ is a type of kind 'Symbol' (from the "GHC.TypeLits"
--- module). The @DataKinds@ extension is required to refer to 'Symbol'-kinded
--- types.
 class Implicit s a where
     -- | 'param' retrieves the implicit parameter named @s@ of type @a@ from
     -- the context @'Implicit' s a@. The name @s@ is specified by a proxy
