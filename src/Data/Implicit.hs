@@ -101,7 +101,7 @@ bar was: "goodbye"
 An infix version of @setParam@ is also provided, '~$'. Using @~$@, the above
 example would be:
 
->>> putFooBar $$~ (Proxy :: Proxy "foo", "hello, world") $$~ (Proxy :: Proxy "bar", "goodbye")
+>>> putFooBar ~$ (Proxy :: Proxy "foo") ~$ (Proxy :: Proxy "bar") $$ "goodbye" $$ "hello, world"
 foo was: "hello, world"
 bar was: "goodbye
 
