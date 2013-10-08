@@ -28,7 +28,7 @@ library
     Data.Implicit
 
   build-depends:
-    base >= 4.3 && < 5,
+    base >= 4.2 && < 5,
     data-default-class > 0 && < 0.1
 
   ghc-options: -Wall
