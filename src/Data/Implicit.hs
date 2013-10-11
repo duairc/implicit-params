@@ -172,13 +172,13 @@ infixl 0 $$
 -- | The constraint @'Implicit_' String@ on a function @f@ indicates that an
 -- unnamed implicit parameter of type @String@ is passed to @f@.
 class Implicit_ a where
+    -- | 'param_' retrieves the unnamed implicit parameter of type @a@ from
+    -- the context @'Implicit_' a@.
     param_ :: a
 
 
 ------------------------------------------------------------------------------
 instance Default a => Implicit_ a where
-    -- | 'param_' retrieves the unnamed implicit parameter of type @a@ from
-    -- the context @'Implicit_' a@.
     param_ = def
 
 

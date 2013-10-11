@@ -1,5 +1,5 @@
 name:           implicit-params
-version:        0.2
+version:        0.2.0.1
 synopsis:       Named and unnamed implicit parameters with defaults.
 license:        BSD3
 license-file:   LICENSE
@@ -9,8 +9,8 @@ stability:      Experimental
 category:       Data
 cabal-version:  >= 1.6
 build-type:     Simple
-homepage:       http://github.com/duairc/implicit
-bug-reports:    http://github.com/duairc/implicit/issues
+homepage:       http://github.com/duairc/implicit-params
+bug-reports:    http://github.com/duairc/implicit-params/issues
 description:
   Named and unnamed implicit parameters with defaults using type classes and
   constraint hacks. For examples, see "Data.Implicit".
@@ -35,4 +35,4 @@ library
 
 source-repository head
   type:     git
-  location: http://github.com/duairc/implicit
+  location: http://github.com/duairc/implicit-params
