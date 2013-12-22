@@ -110,12 +110,14 @@ module Data.Implicit
     , param
     , setParam
     , (~$)
+    , (~..)
     , ($$)
 
     , Implicit_
     , param_
     , setParam_
     , ($~)
+    , (~.)
     )
 where
 
@@ -161,6 +163,14 @@ infixl 1 ~$
 
 
 ------------------------------------------------------------------------------
+-- | Modify a named implicit parameter.
+(~..) :: Implicit s a => (Implicit s b => c) -> proxy s -> (a -> b) -> c
+(~..) f proxy g = f ~$ proxy $$ g (param proxy)
+infixl 8 ~..
+{-# INLINE ~.. #-}
+
+
+------------------------------------------------------------------------------
 -- | A left-associated version of '$'.
 ($$) :: (a -> b) -> a -> b
 infixl 0 $$
@@ -200,3 +210,11 @@ setParam_ a f = unsafeCoerce (Param_ f :: Param_ a b) a
 infixl 1 $~
 f $~ a = unsafeCoerce (Param_ f :: Param_ a b) a
 {-# INLINE ($~) #-}
+
+
+------------------------------------------------------------------------------
+-- | Modify an unnamed implicit parameter.
+(~.) :: Implicit_ a => (Implicit_ b => c) -> (a -> b) -> c
+f ~. g = f $~ g param_
+infixl 8 ~.
+{-# INLINE ~. #-}
