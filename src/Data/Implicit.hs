@@ -167,7 +167,7 @@ infixl 1 ~$
 (~..) :: Implicit s a => (Implicit s b => c) -> proxy s -> (a -> b) -> c
 (~..) f proxy g = f ~$ proxy $$ g (param proxy)
 infixl 8 ~..
-{-# INLINE ~.. #-}
+{-# INLINE (~..) #-}
 
 
 ------------------------------------------------------------------------------
@@ -217,4 +217,4 @@ f $~ a = unsafeCoerce (Param_ f :: Param_ a b) a
 (~.) :: Implicit_ a => (Implicit_ b => c) -> (a -> b) -> c
 f ~. g = f $~ g param_
 infixl 8 ~.
-{-# INLINE ~. #-}
+{-# INLINE (~.) #-}
